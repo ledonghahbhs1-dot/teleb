@@ -1,25 +1,30 @@
-# 🤖 Telegram Bot - WolfMod Dragon City
+# 🤖 WolfMod Telegram Bot - Dragon City
 
-Bot Telegram với các lệnh:
+Bot Telegram với đầy đủ lệnh cho Dragon City.
+
+## 📋 Commands
 - /start - Chào mừng
 - /help - Danh sách lệnh
-- /scriptfreedragoncity - Script miễn phí
-- /scriptvipdragoncity - Script VIP
+- /scriptfreedragoncity - Script DC miễn phí
+- /scriptvipdragoncity - Script DC VIP
 - /getfreekey - Lấy key miễn phí
-- /tutorial - Hướng dẫn
-- /paymentmethod - Thanh toán
+- /tutorial - Hướng dẫn sử dụng
+- /paymentmethod - Phương thức thanh toán
 - /gameguardian - Download GameGuardian
 - /vphonegaga - Download VPhoneGaga
 - /bluestack - Download BlueStack
 
-## 🚀 Deploy on Railway (Free)
-1. Fork repo này
-2. Vào [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Thêm biến môi trường: `TELEGRAM_BOT_TOKEN` = token của bạn
-4. Deploy!
+## 🚀 Deploy FREE on Railway
 
-## ⚙️ Run locally
+1. Fork repo này
+2. Vào [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+3. Chọn repo này
+4. Vào tab **Variables** → Add:
+   - `TELEGRAM_BOT_TOKEN` = token bot của bạn
+5. Click **Deploy** ✅
+
+## 💻 Run locally
 ```bash
 npm install
-TELEGRAM_BOT_TOKEN=your_token node src/bot.js
+TELEGRAM_BOT_TOKEN=your_token node index.js
 ```

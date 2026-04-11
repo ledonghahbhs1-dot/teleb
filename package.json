@@ -1,15 +1,12 @@
 {
-  "name": "wolfmod-telebot",
+  "name": "wolfmod-telegram-bot",
   "version": "1.0.0",
-  "description": "Telegram Bot for Dragon City by WolfMod",
+  "description": "WolfMod Dragon City Telegram Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "engines": {
-    "node": ">=18"
-  },
   "dependencies": {
-    "node-telegram-bot-api": "^0.67.0"
+    "node-telegram-bot-api": "^0.66.0"
   }
 }

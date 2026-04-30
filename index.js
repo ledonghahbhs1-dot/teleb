@@ -38,7 +38,7 @@ function startBot() {
   bot.onText(/\/start/, groupOnly((msg) => {
     const firstName = msg.from?.first_name ?? "there";
     bot.sendMessage(msg.chat.id,
-      "👋 Hello, <b>" + esc(firstName) + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n<i>(build: v5-06:51:49)</i>\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
+      "👋 Hello, <b>" + esc(firstName) + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
       { parse_mode: "HTML" }
     );
   }));
@@ -71,14 +71,10 @@ function startBot() {
     });
   }));
 
-  bot.onText(/^\/getkey(?:@\w+)?(?:\s+(.+))?/, groupOnly(async (msg, match) => {
+  bot.onText(/\/getkey(?:\s+(.+))?/, groupOnly(async (msg, match) => {
     const chatId = msg.chat.id;
-    log("HIT /getkey from chat=" + chatId + " text=" + JSON.stringify(msg.text));
-
-    // Outer try/catch — guarantees the bot ALWAYS replies, even on unexpected errors
-    try {
-      const raw = match && match[1] ? match[1].trim() : null;
-      const username = raw ? raw.replace(/^@/, "") : null;
+    const raw = match && match[1] ? match[1].trim() : null;
+    const username = raw ? raw.replace(/^@/, "") : null;
 
     if (!username) {
       await bot.sendMessage(chatId,
@@ -214,15 +210,6 @@ function startBot() {
         "❌ <b>Connection error.</b>\nUnable to reach server.\n<code>" + esc(err.message) + "</code>"
       );
     }
-
-    } catch (outerErr) {
-      log("/getkey OUTER ERROR: " + outerErr.stack);
-      try {
-        await bot.sendMessage(chatId,
-          "❌ Bot crashed handling /getkey. Error: " + (outerErr.message || String(outerErr)).substring(0, 300)
-        );
-      } catch(_){}
-    }
   }));
 
   bot.onText(/\/tutorial/, groupOnly((msg) => {
@@ -259,6 +246,20 @@ function startBot() {
       reply_markup: { inline_keyboard: [[{ text: "💻 Download BlueStack", url: "https://mega.nz/file/Wd0yQD6a#Df68i0BypTiQ7Spgk5jXx4j_ly-tm0dGnvMY_weVms8" }]] }
     });
   }));
+
+  // DEBUG: catch /getkey-like messages and echo what we received
+  bot.on("message", (msg) => {
+    const t = msg.text ?? "";
+    if (t.toLowerCase().startsWith("/getkey") && isGroupChat(msg)) {
+      log("DEBUG /getkey caught: chat=" + msg.chat.id + " text=" + JSON.stringify(t) + " entities=" + JSON.stringify(msg.entities));
+      bot.sendMessage(msg.chat.id,
+        "🐛 DEBUG /getkey received\n" +
+        "text=<code>" + esc(t) + "</code>\n" +
+        "entities=<code>" + esc(JSON.stringify(msg.entities || [])) + "</code>",
+        { parse_mode: "HTML" }
+      ).catch(e => log("debug send failed: " + e.message));
+    }
+  });
 
   bot.on("message", (msg) => {
     if ((msg.text ?? "").startsWith("/")) return;

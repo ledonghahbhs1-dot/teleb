@@ -250,26 +250,7 @@ function startBot() {
   }));
 
   bot.on("message", (msg) => {
-    const txt = (msg.text ?? "").trim();
-
-    // Catch /getkey without @botname (message NOT processed by onText handler)
-    // This fires for ALL messages, including those onText already handled.
-    // We only act if text looks like /getkey but our onText didn't handle it (no harm either way).
-    if (isGroupChat(msg) && /^\/getkey(?!@wolfmodyt2_bot)/i.test(txt) && !txt.match(/^\/getkey@\w+/i)) {
-      const parts = txt.split(/\s+/);
-      const username = parts[1] ? parts[1].replace(/^@/, "") : null;
-      const hint = username
-        ? `<code>/getkey@wolfmodyt2_bot ${esc(username)}</code>`
-        : `<code>/getkey@wolfmodyt2_bot USERNAME</code>`;
-      bot.sendMessage(msg.chat.id,
-        "⚠️ <b>Please include the bot name to avoid conflicts:</b>\n\n" + hint + "\n\n" +
-        "_(There are multiple bots in this group. Always use @wolfmodyt2_bot to reach me.)_",
-        { parse_mode: "HTML" }
-      ).catch(() => {});
-      return;
-    }
-
-    if (txt.startsWith("/")) return;
+    if ((msg.text ?? "").startsWith("/")) return;
     if (!isGroupChat(msg)) {
       bot.sendMessage(msg.chat.id,
         "🚫 <b>This bot only works in group chats.</b>\n\nPlease add me to a group or supergroup to use my commands.",

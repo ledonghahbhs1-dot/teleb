@@ -136,9 +136,22 @@ function startBot() {
       }
 
       if (!res.ok) {
+        let serverErr = "";
+        try { serverErr = (JSON.parse(bodyText).error || "").toString(); } catch(_) {}
+
+        if (/already exists/i.test(serverErr)) {
+          await safeEdit(
+            "⚠️ <b>Username already exists!</b>\n\n" +
+            "👤 <b>@" + esc(username) + "</b> already has an active key.\n\n" +
+            "💡 Please try a different username, e.g. <code>/getkey " + esc(username) + "2</code>\n" +
+            "⏱ Each key is valid for <b>2 hours</b> only."
+          );
+          return;
+        }
+
         await safeEdit(
           "❌ <b>Failed to generate key.</b>\n" +
-          "Server error <code>" + res.status + "</code>:\n<code>" + esc(bodyText.substring(0, 300)) + "</code>"
+          "Server error <code>" + res.status + "</code>:\n<code>" + esc(serverErr || bodyText.substring(0, 300)) + "</code>"
         );
         return;
       }

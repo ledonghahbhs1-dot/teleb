@@ -38,14 +38,14 @@ function startBot() {
   bot.onText(/\/start/, groupOnly((msg) => {
     const firstName = msg.from?.first_name ?? "there";
     bot.sendMessage(msg.chat.id,
-      "👋 Hello, <b>" + esc(firstName) + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
+      "👋 Hello, <b>" + esc(firstName) + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey@wolfmodyt2_bot USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
       { parse_mode: "HTML" }
     );
   }));
 
   bot.onText(/\/help/, groupOnly((msg) => {
     bot.sendMessage(msg.chat.id,
-      "📖 <b>Command List</b>\n\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME - Generate a key for a user\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n🏠 /start\n\n⚡️ @wolfmodyt",
+      "📖 <b>Command List</b>\n\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey@wolfmodyt2_bot USERNAME - Generate a key (use full @botname syntax to ensure delivery)\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n🏠 /start\n\n⚡️ @wolfmodyt",
       { parse_mode: "HTML" }
     );
   }));
@@ -78,7 +78,7 @@ function startBot() {
 
     if (!username) {
       await bot.sendMessage(chatId,
-        "❌ <b>Missing username!</b>\n\nUsage: <code>/getkey USERNAME</code>\nExample: <code>/getkey wolfmodyt</code>",
+        "❌ <b>Missing username!</b>\n\nUsage: <code>/getkey@wolfmodyt2_bot USERNAME</code>\nExample: <code>/getkey@wolfmodyt2_bot wolfmodyt</code>",
         { parse_mode: "HTML" }
       );
       return;
@@ -143,7 +143,7 @@ function startBot() {
           await safeEdit(
             "⚠️ <b>Username already exists!</b>\n\n" +
             "👤 <b>@" + esc(username) + "</b> already has an active key.\n\n" +
-            "💡 Please try a different username, e.g. <code>/getkey " + esc(username) + "2</code>\n" +
+            "💡 Please try a different username, e.g. <code>/getkey@wolfmodyt2_bot " + esc(username) + "2</code>\n" +
             "⏱ Each key is valid for <b>2 hours</b> only."
           );
           return;
@@ -246,20 +246,6 @@ function startBot() {
       reply_markup: { inline_keyboard: [[{ text: "💻 Download BlueStack", url: "https://mega.nz/file/Wd0yQD6a#Df68i0BypTiQ7Spgk5jXx4j_ly-tm0dGnvMY_weVms8" }]] }
     });
   }));
-
-  // DEBUG: catch /getkey-like messages and echo what we received
-  bot.on("message", (msg) => {
-    const t = msg.text ?? "";
-    if (t.toLowerCase().startsWith("/getkey") && isGroupChat(msg)) {
-      log("DEBUG /getkey caught: chat=" + msg.chat.id + " text=" + JSON.stringify(t) + " entities=" + JSON.stringify(msg.entities));
-      bot.sendMessage(msg.chat.id,
-        "🐛 DEBUG /getkey received\n" +
-        "text=<code>" + esc(t) + "</code>\n" +
-        "entities=<code>" + esc(JSON.stringify(msg.entities || [])) + "</code>",
-        { parse_mode: "HTML" }
-      ).catch(e => log("debug send failed: " + e.message));
-    }
-  });
 
   bot.on("message", (msg) => {
     if ((msg.text ?? "").startsWith("/")) return;

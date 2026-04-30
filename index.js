@@ -108,7 +108,7 @@ function startBot() {
     };
 
     try {
-      const res = await fetch("https://wolfmod.xyz/api/genkey", {
+      const res = await fetch("https://www.wolfmod.xyz/api/genkey", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -149,17 +149,46 @@ function startBot() {
         return;
       }
 
-      const key = data.key || data.license_key || data.licenseKey || "N/A";
-      const shortUrl = data.short_url || data.shortUrl || data.url || data.link || "N/A";
+      // Real response: { success, shortUrls: { link4m, workink }, message, key? }
+      const link4m = data.shortUrls?.link4m || "";
+      const workink = data.shortUrls?.workink || "";
+      const key = data.key || data.license_key || data.licenseKey || "";
 
-      await safeEdit(
-        "✅ <b>Key đã được tạo!</b>\n\n" +
-        "👤 Username: <b>@" + esc(username) + "</b>\n" +
-        "🗝 Key: <code>" + esc(key) + "</code>\n" +
-        "🔗 Link kích hoạt: " + esc(shortUrl) + "\n\n" +
-        "⚠️ Key đang ở trạng thái <b>pending</b>. Bấm link để kích hoạt."
-      );
-      log("/getkey success: " + key + " | " + shortUrl);
+      if (!link4m && !workink && !key) {
+        await safeEdit(
+          "❌ <b>Server trả về dữ liệu không hợp lệ.</b>\n<code>" + esc(JSON.stringify(data).substring(0, 300)) + "</code>"
+        );
+        return;
+      }
+
+      const lines = [
+        "✅ <b>Key đã được tạo cho @" + esc(username) + "</b>",
+        "",
+        data.message ? "ℹ️ " + esc(data.message) : null,
+        key ? "🗝 <b>Key:</b> <code>" + esc(key) + "</code>" : null,
+        "",
+        "🔗 <b>Bấm 1 trong 2 link bên dưới để kích hoạt key:</b>"
+      ].filter(Boolean);
+
+      const buttons = [];
+      if (link4m) buttons.push([{ text: "🔗 Link4m", url: link4m }]);
+      if (workink) buttons.push([{ text: "💼 Work.ink", url: workink }]);
+
+      try {
+        await bot.editMessageText(lines.join("\n"), {
+          chat_id: chatId,
+          message_id: loadingMsg.message_id,
+          parse_mode: "HTML",
+          reply_markup: { inline_keyboard: buttons }
+        });
+      } catch(e) {
+        log("editMessageText with buttons failed: " + e.message);
+        await bot.sendMessage(chatId, lines.join("\n"), {
+          parse_mode: "HTML",
+          reply_markup: { inline_keyboard: buttons }
+        });
+      }
+      log("/getkey success: link4m=" + link4m + " | workink=" + workink);
 
     } catch (err) {
       log("/getkey fetch error: " + err.message);

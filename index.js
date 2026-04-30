@@ -3,6 +3,8 @@ const TelegramBot = require("node-telegram-bot-api");
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error("TELEGRAM_BOT_TOKEN is required");
 
+const wolfApiKey = process.env.WOLF_API_KEY || "WOLF_SUPER_SECRET_123456";
+
 const log = (msg) => console.log("[" + new Date().toISOString() + "] " + msg);
 
 // Escape HTML for Telegram parse_mode: HTML
@@ -32,7 +34,7 @@ let bot;
 
 function startBot() {
   bot = new TelegramBot(token, {
-    polling: { interval: 2000, autoStart: true, params: { timeout: 10 } }
+    polling: { interval: 1000, autoStart: true, params: { timeout: 30 } }
   });
 
   bot.onText(/\/start/, groupOnly((msg) => {
@@ -112,7 +114,7 @@ function startBot() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wolf-api-key": "WOLF_SUPER_SECRET_123456",
+          "x-wolf-api-key": wolfApiKey,
           "User-Agent": "WolfMod-Bot/1.0"
         },
         body: JSON.stringify({ username })
@@ -267,7 +269,8 @@ function startBot() {
     }
   });
 
-  log("✅ WolfMod Bot started (group-only + /getkey v3 with HTML escape)");
+  setInterval(() => log("keep-alive ping"), 4 * 60 * 1000);
+  log("✅ WolfMod Bot started (group-only | WOLF_API_KEY from env)");
 }
 
 startBot();

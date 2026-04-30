@@ -5,6 +5,11 @@ if (!token) throw new Error("TELEGRAM_BOT_TOKEN is required");
 
 const log = (msg) => console.log("[" + new Date().toISOString() + "] " + msg);
 
+// Escape HTML for Telegram parse_mode: HTML
+function esc(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 function isGroupChat(msg) {
   return msg.chat.type === "group" || msg.chat.type === "supergroup";
 }
@@ -31,13 +36,11 @@ function startBot() {
   });
 
   bot.onText(/\/start/, groupOnly((msg) => {
-    const chatId = msg.chat.id;
     const firstName = msg.from?.first_name ?? "there";
-    bot.sendMessage(chatId,
-      "👋 Hello, <b>" + firstName + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
+    bot.sendMessage(msg.chat.id,
+      "👋 Hello, <b>" + esc(firstName) + "</b>!\n\n🐉 Welcome to <b>WolfMod Bot</b>! 🎉\n\nCommands:\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n❓ /help",
       { parse_mode: "HTML" }
     );
-    log("/start from " + (msg.from?.username || chatId));
   }));
 
   bot.onText(/\/help/, groupOnly((msg) => {
@@ -68,7 +71,6 @@ function startBot() {
     });
   }));
 
-  // /getkey USERNAME
   bot.onText(/\/getkey(?:\s+(.+))?/, groupOnly(async (msg, match) => {
     const chatId = msg.chat.id;
     const raw = match && match[1] ? match[1].trim() : null;
@@ -87,7 +89,7 @@ function startBot() {
     let loadingMsg;
     try {
       loadingMsg = await bot.sendMessage(chatId,
-        "⏳ Đang tạo key cho <b>@" + username + "</b>...",
+        "⏳ Đang tạo key cho <b>@" + esc(username) + "</b>...",
         { parse_mode: "HTML" }
       );
     } catch (e) {
@@ -95,51 +97,75 @@ function startBot() {
       return;
     }
 
+    const safeEdit = async (text) => {
+      try {
+        await bot.editMessageText(text, { chat_id: chatId, message_id: loadingMsg.message_id, parse_mode: "HTML" });
+      } catch (e) {
+        log("editMessageText failed: " + e.message);
+        // Fallback: send plain text without HTML
+        await bot.sendMessage(chatId, text.replace(/<[^>]+>/g, ""));
+      }
+    };
+
     try {
       const res = await fetch("https://wolfmod.xyz/api/genkey", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wolf-api-key": "WOLF_SUPER_SECRET_123456"
+          "x-wolf-api-key": "WOLF_SUPER_SECRET_123456",
+          "User-Agent": "WolfMod-Bot/1.0"
         },
         body: JSON.stringify({ username })
       });
 
+      const ctype = res.headers.get("content-type") || "";
       const bodyText = await res.text();
-      log("genkey response " + res.status + ": " + bodyText.substring(0, 300));
+      log("genkey HTTP " + res.status + " ctype=" + ctype + " body[0..200]=" + bodyText.substring(0, 200));
+
+      // If we got HTML instead of JSON — server is wrong/blocked
+      if (!ctype.includes("application/json")) {
+        await safeEdit(
+          "❌ <b>Server không trả về JSON.</b>\n" +
+          "HTTP <code>" + res.status + "</code>, content-type: <code>" + esc(ctype) + "</code>\n\n" +
+          "Có thể:\n" +
+          "• API <code>/api/genkey</code> chưa tồn tại trên wolfmod.xyz\n" +
+          "• Hoặc bị Cloudflare chặn (thiếu header)\n\n" +
+          "<b>Phản hồi (200 ký tự đầu):</b>\n<code>" + esc(bodyText.substring(0, 200)) + "</code>"
+        );
+        return;
+      }
 
       if (!res.ok) {
-        await bot.editMessageText(
-          "❌ <b>Tạo key thất bại.</b>\nServer trả về lỗi <code>" + res.status + "</code>:\n<code>" + bodyText.substring(0, 200) + "</code>",
-          { chat_id: chatId, message_id: loadingMsg.message_id, parse_mode: "HTML" }
+        await safeEdit(
+          "❌ <b>Tạo key thất bại.</b>\n" +
+          "Server lỗi <code>" + res.status + "</code>:\n<code>" + esc(bodyText.substring(0, 300)) + "</code>"
         );
         return;
       }
 
       let data;
-      try { data = JSON.parse(bodyText); } catch(e) { data = {}; }
+      try { data = JSON.parse(bodyText); } catch(e) {
+        await safeEdit("❌ <b>JSON parse error.</b>\n<code>" + esc(bodyText.substring(0, 200)) + "</code>");
+        return;
+      }
 
       const key = data.key || data.license_key || data.licenseKey || "N/A";
       const shortUrl = data.short_url || data.shortUrl || data.url || data.link || "N/A";
 
-      await bot.editMessageText(
+      await safeEdit(
         "✅ <b>Key đã được tạo!</b>\n\n" +
-        "👤 Username: <b>@" + username + "</b>\n" +
-        "🗝 Key: <code>" + key + "</code>\n" +
-        "🔗 Link kích hoạt: " + shortUrl + "\n\n" +
-        "⚠️ Key đang ở trạng thái <b>pending</b>. Bấm link để kích hoạt.",
-        { chat_id: chatId, message_id: loadingMsg.message_id, parse_mode: "HTML" }
+        "👤 Username: <b>@" + esc(username) + "</b>\n" +
+        "🗝 Key: <code>" + esc(key) + "</code>\n" +
+        "🔗 Link kích hoạt: " + esc(shortUrl) + "\n\n" +
+        "⚠️ Key đang ở trạng thái <b>pending</b>. Bấm link để kích hoạt."
       );
       log("/getkey success: " + key + " | " + shortUrl);
 
     } catch (err) {
       log("/getkey fetch error: " + err.message);
-      const errMsg = "❌ <b>Lỗi kết nối.</b>\nKhông thể gọi server.\n<code>" + err.message + "</code>";
-      if (loadingMsg) {
-        await bot.editMessageText(errMsg, { chat_id: chatId, message_id: loadingMsg.message_id, parse_mode: "HTML" });
-      } else {
-        await bot.sendMessage(chatId, errMsg, { parse_mode: "HTML" });
-      }
+      await safeEdit(
+        "❌ <b>Lỗi kết nối.</b>\nKhông thể gọi server.\n<code>" + esc(err.message) + "</code>"
+      );
     }
   }));
 
@@ -198,7 +224,7 @@ function startBot() {
     }
   });
 
-  log("✅ WolfMod Bot started (group-only + /getkey v2)");
+  log("✅ WolfMod Bot started (group-only + /getkey v3 with HTML escape)");
 }
 
 startBot();

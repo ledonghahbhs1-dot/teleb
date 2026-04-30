@@ -71,7 +71,7 @@ function startBot() {
     });
   }));
 
-  bot.onText(/\/getkey(?:\s+(.+))?/, groupOnly(async (msg, match) => {
+  bot.onText(/^\/getkey(?:@\w+)?(?:\s+(.+))?/i, groupOnly(async (msg, match) => {
     const chatId = msg.chat.id;
     const raw = match && match[1] ? match[1].trim() : null;
     const username = raw ? raw.replace(/^@/, "") : null;

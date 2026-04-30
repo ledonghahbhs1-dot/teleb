@@ -45,7 +45,7 @@ function startBot() {
 
   bot.onText(/\/help/, groupOnly((msg) => {
     bot.sendMessage(msg.chat.id,
-      "📖 <b>Command List</b>\n\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME - Tạo key cho người dùng\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n🏠 /start\n\n⚡️ @wolfmodyt",
+      "📖 <b>Command List</b>\n\n📜 /scriptfreedragoncity\n💎 /scriptvipdragoncity\n🔑 /getfreekey\n🗝 /getkey USERNAME - Generate a key for a user\n📖 /tutorial\n💳 /paymentmethod\n🛡 /gameguardian\n📱 /vphonegaga\n💻 /bluestack\n🏠 /start\n\n⚡️ @wolfmodyt",
       { parse_mode: "HTML" }
     );
   }));
@@ -78,7 +78,7 @@ function startBot() {
 
     if (!username) {
       await bot.sendMessage(chatId,
-        "❌ <b>Thiếu username!</b>\n\nCú pháp: <code>/getkey USERNAME</code>\nVí dụ: <code>/getkey wolfmodyt</code>",
+        "❌ <b>Missing username!</b>\n\nUsage: <code>/getkey USERNAME</code>\nExample: <code>/getkey wolfmodyt</code>",
         { parse_mode: "HTML" }
       );
       return;
@@ -89,7 +89,7 @@ function startBot() {
     let loadingMsg;
     try {
       loadingMsg = await bot.sendMessage(chatId,
-        "⏳ Đang tạo key cho <b>@" + esc(username) + "</b>...",
+        "⏳ Generating key for <b>@" + esc(username) + "</b>...",
         { parse_mode: "HTML" }
       );
     } catch (e) {
@@ -125,20 +125,20 @@ function startBot() {
       // If we got HTML instead of JSON — server is wrong/blocked
       if (!ctype.includes("application/json")) {
         await safeEdit(
-          "❌ <b>Server không trả về JSON.</b>\n" +
+          "❌ <b>Server did not return JSON.</b>\n" +
           "HTTP <code>" + res.status + "</code>, content-type: <code>" + esc(ctype) + "</code>\n\n" +
-          "Có thể:\n" +
-          "• API <code>/api/genkey</code> chưa tồn tại trên wolfmod.xyz\n" +
-          "• Hoặc bị Cloudflare chặn (thiếu header)\n\n" +
-          "<b>Phản hồi (200 ký tự đầu):</b>\n<code>" + esc(bodyText.substring(0, 200)) + "</code>"
+          "Possible reasons:\n" +
+          "• <code>/api/genkey</code> endpoint does not exist on wolfmod.xyz\n" +
+          "• Or blocked by Cloudflare (missing header)\n\n" +
+          "<b>Response (first 200 chars):</b>\n<code>" + esc(bodyText.substring(0, 200)) + "</code>"
         );
         return;
       }
 
       if (!res.ok) {
         await safeEdit(
-          "❌ <b>Tạo key thất bại.</b>\n" +
-          "Server lỗi <code>" + res.status + "</code>:\n<code>" + esc(bodyText.substring(0, 300)) + "</code>"
+          "❌ <b>Failed to generate key.</b>\n" +
+          "Server error <code>" + res.status + "</code>:\n<code>" + esc(bodyText.substring(0, 300)) + "</code>"
         );
         return;
       }
@@ -156,18 +156,19 @@ function startBot() {
 
       if (!link4m && !workink && !key) {
         await safeEdit(
-          "❌ <b>Server trả về dữ liệu không hợp lệ.</b>\n<code>" + esc(JSON.stringify(data).substring(0, 300)) + "</code>"
+          "❌ <b>Server returned invalid data.</b>\n<code>" + esc(JSON.stringify(data).substring(0, 300)) + "</code>"
         );
         return;
       }
 
       const lines = [
-        "✅ <b>Key đã được tạo cho @" + esc(username) + "</b>",
+        "✅ <b>Key generated for @" + esc(username) + "</b>",
         "",
         data.message ? "ℹ️ " + esc(data.message) : null,
         key ? "🗝 <b>Key:</b> <code>" + esc(key) + "</code>" : null,
+        "⏱ <b>Duration:</b> Each key is valid for <b>2 hours</b>.",
         "",
-        "🔗 <b>Bấm 1 trong 2 link bên dưới để kích hoạt key:</b>"
+        "🔗 <b>Tap one of the buttons below to activate your key:</b>"
       ].filter(Boolean);
 
       const buttons = [];
@@ -193,7 +194,7 @@ function startBot() {
     } catch (err) {
       log("/getkey fetch error: " + err.message);
       await safeEdit(
-        "❌ <b>Lỗi kết nối.</b>\nKhông thể gọi server.\n<code>" + esc(err.message) + "</code>"
+        "❌ <b>Connection error.</b>\nUnable to reach server.\n<code>" + esc(err.message) + "</code>"
       );
     }
   }));

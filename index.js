@@ -4,6 +4,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) throw new Error("TELEGRAM_BOT_TOKEN is required");
 
 const wolfApiKey = process.env.WOLF_API_KEY || "WOLF_SUPER_SECRET_123456";
+const allowedGroupId = process.env.ALLOWED_GROUP_ID ? String(process.env.ALLOWED_GROUP_ID) : null;
 
 const log = (msg) => console.log("[" + new Date().toISOString() + "] " + msg);
 
@@ -13,14 +14,20 @@ function esc(str) {
 }
 
 function isGroupChat(msg) {
-  return msg.chat.type === "group" || msg.chat.type === "supergroup";
+  const isGroup = msg.chat.type === "group" || msg.chat.type === "supergroup";
+  if (!isGroup) return false;
+  if (allowedGroupId && String(msg.chat.id) !== allowedGroupId) return false;
+  return true;
 }
 
 function groupOnly(handler) {
   return (msg, match) => {
     if (!isGroupChat(msg)) {
+      const wrongGroup = allowedGroupId && (msg.chat.type === "group" || msg.chat.type === "supergroup") && String(msg.chat.id) !== allowedGroupId;
       bot.sendMessage(msg.chat.id,
-        "🚫 <b>This bot only works in group chats.</b>\n\nPlease add me to a group or supergroup to use my commands.",
+        wrongGroup
+          ? "🚫 <b>This bot is restricted to a specific group.</b>\nYou are not authorized to use this bot here."
+          : "🚫 <b>This bot only works in group chats.</b>\n\nPlease add me to a group or supergroup to use my commands.",
         { parse_mode: "HTML" }
       );
       log("Rejected private from " + (msg.from?.username || msg.chat.id));
@@ -35,6 +42,19 @@ let bot;
 function startBot() {
   bot = new TelegramBot(token, {
     polling: { interval: 1000, autoStart: true, params: { timeout: 30 } }
+  });
+
+  // Helper: /chatid — reveals this group's chat ID so admin can set ALLOWED_GROUP_ID
+  bot.onText(/\/chatid/, (msg) => {
+    if (msg.chat.type !== "group" && msg.chat.type !== "supergroup") {
+      bot.sendMessage(msg.chat.id, "This command only works in groups.");
+      return;
+    }
+    bot.sendMessage(msg.chat.id,
+      "🆔 <b>This group's Chat ID:</b>\n<code>" + msg.chat.id + "</code>\n\n" +
+      "Set this as <code>ALLOWED_GROUP_ID</code> on Railway to restrict bot to this group only.",
+      { parse_mode: "HTML" }
+    );
   });
 
   bot.onText(/\/start/, groupOnly((msg) => {
